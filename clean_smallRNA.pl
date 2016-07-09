@@ -73,12 +73,11 @@ print LOG datetime, " Initial count\n";
 print LOG datetime, " File $readspair1, total FASTQ reads: ", count_fastq($readspair1, "fq"), "\n"; # do a basic count
 print LOG "\n";
 
-print LOG datetime, " MD5sum: ", md5sum($readspair1);
+print LOG datetime, " MD5sum: ", md5sum($readspair1), "\n";
 
 # clip adapters (needs to be done before collapsing because it works on fastq files
 print LOG datetime, " Clipping adapters and quality filter with Trimmomatic\n";
-my $noadapter_name = $outputname . "-noadapter.fq";
-clipadapters($readspair1, $noadapter_name);
+my $noadapter_name = clipadapters($readspair1);
 print LOG datetime, " File with unpaired reads, FASTQ reads: ", count_fastq($noadapter_name, "fq"), "\n";
 print LOG "\n";
 
@@ -90,7 +89,6 @@ if ($? < 0) {
 	print LOG "fastx_collapser did not run correctly, aborting\n";
 	die "fastx_collapser did not run correctly\n";
 }
-
 print LOG datetime, " File with collapsed reads, FASTA reads: ", count_fastq($collapsed_name, "fa"), "\n";
 print LOG "\n";
 
@@ -122,6 +120,8 @@ print LOG "\n";
 #print the data files 
 my $unpairedoutname = $outputdir . "/" . $outputname .  ".fa";
 `mv $noribo_name $unpairedoutname`;
+`mv $collapsed_name $outputdir`;
+`mv $nothreeprime_name $outputdir`;
 print LOG datetime, " Data file are written in $unpairedoutname\n";
 print LOG "\n";
 print STDERR "Done\n";
@@ -153,14 +153,14 @@ sub count_fastq { # now can count fasta too
 }
 
 sub clipadapters {
-	my ($inputfile1, $outputfile1) = @_;
+	my ($inputfile1) = @_;
 	my $forward_unpaired = File::Temp->new( UNLINK => 1, SUFFIX => '.fastq' );
 	my $trim_run = `java -jar $TRIMMOMATIC_PATH/trimmomatic-0.32.jar SE -threads $threads -phred33 $inputfile1 $forward_unpaired ILLUMINACLIP:$TRIMMOMATIC_PATH/illuminaClipping.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:$MINLEN`;
 	if ($? < 0) {
 		print LOG "Trimmomatic did not run correctly, aborting\n";
 		die "Trimmomatic did not run correctly\n";
 	}
-	$outputfile1 = $forward_unpaired; # needed because Trimmomatic saves to same file as input file
+	return($forward_unpaired);
 }
 
 sub ribosome_removal{
