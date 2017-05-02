@@ -84,7 +84,7 @@ print LOG "\n";
 # collapse the reads, removing duplicates
 print LOG datetime, " Collapsing reads, removing duplicates\n";
 my $collapsed_name = $outputname . "-collapsed.fa";
-`cp $noadapter_name noadapterfile.fq`;
+#`cp $noadapter_name noadapterfile.fq`;
 `fastx_collapser -i $noadapter_name -o $collapsed_name -Q33`;
 if ($? < 0) {
 	print LOG "fastx_collapser did not run correctly, aborting\n";
